@@ -3,6 +3,8 @@ import logging
 from botocore.exceptions import ClientError
 from utils.athena import list_workgroups
 
+AWS_PROFILE = "default"
+
 REGIONS = ["us-east-1", "sa-east-1"]
 
 logging.basicConfig(
@@ -14,7 +16,8 @@ def main():
     for region in REGIONS:
         logging.info(f"Collecting Athena workgroups in region: {region}")
         try:
-            athena_client = boto3.client("athena", region_name=region)
+            session = boto3.Session(profile_name=AWS_PROFILE, region_name=region)
+            athena_client = session.client("athena")
             workgroups = list_workgroups(athena_client)
         except ClientError as e:
             logging.error(
