@@ -35,17 +35,28 @@ def list_execution_buckets(athena_client, max_executions):
     executions_ids = response.get("QueryExecutionIds", [])
     logging.info(f"Found {len(executions_ids)} query executions in region.")
 
-    bucket_name_list = set()
+    bucket_name_list = {}
     for execution_id in executions_ids:
         try:
             detail = athena_client.get_query_execution(QueryExecutionId=execution_id)
             output_location = detail["QueryExecution"]["ResultConfiguration"][
                 "OutputLocation"
             ]
-            bucket_name = output_location.rsplit("/", 1)[
-                0
-            ]  # Extract bucket name from S3 URI
-            bucket_name_list.add(bucket_name)
+            bucket_name = output_location.rsplit("/", 1)[0]
+            last_seen = detail["QueryExecution"]["Status"].get(
+                "CompletionDateTime", "N/A"
+            )
+
+            if bucket_name in bucket_name_list:
+                bucket_name_list[bucket_name]["total_executions"] += 1
+                if last_seen and last_seen > bucket_name_list[bucket_name]["last_seen"]:
+                    bucket_name_list[bucket_name]["last_seen"] = last_seen
+            else:
+                bucket_name_list[bucket_name] = {
+                    "total_executions": 1,
+                    "last_seen": last_seen,
+                }
+
         except ClientError as e:
             logging.error(
                 f"Error getting execution '{execution_id}': {e.response['Error']['Code']}"

@@ -30,8 +30,10 @@ def main():
             )
             continue
 
-        for bucket in executions:
-            logging.info(f"  Bucket: {bucket}")
+        for bucket, info in executions.items():
+            logging.info(
+                f"  Bucket: {bucket} | Executions: {info['total_executions']} | Last seen: {info['last_seen']}"
+            )
 
 
 if __name__ == "__main__":
