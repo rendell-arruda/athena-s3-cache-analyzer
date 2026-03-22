@@ -5,11 +5,14 @@ from utils.athena import list_execution_buckets
 
 AWS_PROFILE = "default"
 REGIONS = ["us-east-1", "sa-east-1"]
-MAX_EXECUTIONS = 50
+MAX_EXECUTIONS = 50  # maximo 50
+
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
+
+logging.getLogger("botocore").setLevel(logging.WARNING)  # Suppress botocore logs
 
 
 def main():
@@ -26,6 +29,9 @@ def main():
                 f"Error connecting to Athena in region '{region}': {e.response['Error']['Code']}"
             )
             continue
+
+        for bucket in executions:
+            logging.info(f"  Bucket: {bucket}")
 
 
 if __name__ == "__main__":

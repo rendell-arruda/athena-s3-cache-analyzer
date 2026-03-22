@@ -33,4 +33,24 @@ def list_workgroups(athena_client):
 def list_execution_buckets(athena_client, max_executions):
     response = athena_client.list_query_executions(MaxResults=max_executions)
     executions_ids = response.get("QueryExecutionIds", [])
-    print(f"Found {len(executions_ids)} query executions.")
+    logging.info(f"Found {len(executions_ids)} query executions in region.")
+
+    bucket_name_list = set()
+    for execution_id in executions_ids:
+        try:
+            detail = athena_client.get_query_execution(QueryExecutionId=execution_id)
+            output_location = detail["QueryExecution"]["ResultConfiguration"][
+                "OutputLocation"
+            ]
+            bucket_name = output_location.rsplit("/", 1)[
+                0
+            ]  # Extract bucket name from S3 URI
+            bucket_name_list.add(bucket_name)
+        except ClientError as e:
+            logging.error(
+                f"Error getting execution '{execution_id}': {e.response['Error']['Code']}"
+            )
+        except KeyError:
+            logging.warning(f"Execution '{execution_id}' has no output location.")
+
+    return bucket_name_list
