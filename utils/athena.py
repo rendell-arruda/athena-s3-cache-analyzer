@@ -28,3 +28,9 @@ def list_workgroups(athena_client):
         )
 
     return workgroups
+
+
+def list_execution_buckets(athena_client, max_executions):
+    response = athena_client.list_query_executions(MaxResults=max_executions)
+    executions_ids = response.get("QueryExecutionIds", [])
+    print(f"Found {len(executions_ids)} query executions.")
